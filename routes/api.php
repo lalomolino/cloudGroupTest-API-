@@ -27,3 +27,5 @@ Route::group([
     Route::post('me', [\App\Http\Controllers\AuthController::class, 'me'])->name('me');
     Route::post('register', [App\Http\Controllers\AuthController::class, 'register'])->name('register');
 });
+
+Route::apiResource('employees', App\Http\Controllers\Api\EmployeeController::class)->middleware('jwt.verify');
