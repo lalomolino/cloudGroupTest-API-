@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobTitle extends Model
 {
     use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -17,6 +18,12 @@ class JobTitle extends Model
         'name',
         'code',
         'importance',
-        'boss'
+        'boss',
+        'employee_id'
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
 }

@@ -29,3 +29,4 @@ Route::group([
 });
 
 Route::apiResource('employees', App\Http\Controllers\Api\EmployeeController::class)->middleware('jwt.verify');
+Route::apiResource('job_titles', App\Http\Controllers\Api\JobTitleController::class)->middleware('jwt.verify');

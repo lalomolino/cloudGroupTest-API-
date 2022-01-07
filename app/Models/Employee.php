@@ -23,11 +23,8 @@ class Employee extends Model
         'user_id'
     ];
 
-    /**
-     * Get the user record associated with the post.
-     */
-    public function job()
+    public function jobs()
     {
-        return $this->belongsTo(JobTitle::class);
+        return $this->hasMany(JobTitle::class);
     }
 }

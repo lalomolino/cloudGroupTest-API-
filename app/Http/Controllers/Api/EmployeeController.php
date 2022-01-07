@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\JobTitle;
 
 class EmployeeController extends Controller
 {
@@ -43,11 +44,12 @@ class EmployeeController extends Controller
     protected function store(Request $request){
     	
         $validator = Validator::make($request->all(), [
-            'name' => 'required|alpha|max:120',
-            'lastname' => 'required|alpha|max:120',
+            'name' => 'required|max:120',
+            'lastname' => 'required|max:120',
             'dni' => 'required|numeric|digits:11',
             'birth_date' => 'required',
-            'photo' => 'required|mimes:jpeg,png|max:2000'
+            'photo' => 'required|mimes:jpeg,png|max:2000',
+            'job' => 'required'
         ]);
             
         if($validator->fails()){
@@ -87,11 +89,17 @@ class EmployeeController extends Controller
             'photo' => $photo,
             'user_id' => $user->id,
         ]);
+
+        // save employee id in job_titles table
+        $jobTitle = JobTitle::where('id', $request->input('job'))->first();
+        
+        $jobTitle->update([
+            'employee_id' => $employee->id
+        ]);
         
         return response()->json([
             'acción' => "Empleado agregado al sistema",
-            'usuario' => $name,
-            'email' => $email,
+            'usuario' => $user,
             'empleado' => $employee
         ]);	
     }
@@ -132,11 +140,12 @@ class EmployeeController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|alpha|max:120',
-            'lastname' => 'sometimes|alpha|max:120',
+            'name' => 'sometimes|max:120',
+            'lastname' => 'sometimes|max:120',
             'dni' => 'sometimes|numeric|digits:11',
             'birth_date' => 'sometimes',
-            'photo' => 'sometimes|mimes:jpeg,png|max:2000'
+            'photo' => 'sometimes|mimes:jpeg,png|max:2000',
+            'job' => 'sometimes'
         ]);
             
         if($validator->fails()){
@@ -153,6 +162,12 @@ class EmployeeController extends Controller
 
         //updating the employee
         $employee = Employee::find($id);
+
+        if ($employee == null) {
+            return response()->json([
+                'información' => "El usuario no existe en el sistema"
+            ]);	
+        }
 
         $employee->update(request()->all());
 
@@ -176,9 +191,19 @@ class EmployeeController extends Controller
             $user->update(['password' => bcrypt($request->input('dni'))]);
         }
 
+        // update employee id in job_titles table
+        if ($request->input('job') != '') {
+            $jobTitle = JobTitle::where('id', $request->input('job'))->first();
+            
+            $jobTitle->update([
+                'employee_id' => $employee->id
+            ]);
+        }
+
         return response()->json([
             'acción' => "Empleado modificado",
-            'usuario' => $employee->name
+            'usuario' => $user,
+            'empleado' => $employee
         ]);	
     }
 
@@ -193,9 +218,14 @@ class EmployeeController extends Controller
     {
         $employee = Employee::where('id', $id)->first();
         $user = User::where('id', $employee->user_id)->first();
+        $jobTitle = JobTitle::where('employee_id', $employee->id)->get();
 
-        $user->delete();
+        foreach ($jobTitle as $job) {
+            $job->update(['employee_id' => null]);
+        }
+        
         $employee->delete();
+        $user->delete();
 
         return response()->json([
             'acción' => "Empleado eliminado"
